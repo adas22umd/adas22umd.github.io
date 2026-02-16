@@ -4,12 +4,40 @@
     font-family: system-ui, sans-serif;
 }
 
+
+
+header{
+    text-align: center;
+    font-size: 32px;
+    grid-area: content-header;
+}
+
+footer{
+    text-align: center;
+    font-size: 12px;
+    color: #cccccc;
+    grid-area: content-footer;
+    align-self: end;
+}
+
 .box-component-container{
     margin: 24px;
     gap: 24px;
     display: flex;
-    height: 100vh;
     align-items: center;
+    grid-area: content-boxes;
+}
+
+body{
+    padding: 1em;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: auto, 1fr, auto;
+    grid-template-areas: 
+    ". content-header ."
+    "content-boxes content-boxes content-boxes"
+    ". content-footer .";
+    height: 90vh;
 }
 
 .component-box{
@@ -90,6 +118,15 @@
     .box-component-container{
         flex-direction: column;
         justify-content: center;
+    }
+    body{
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: auto, 1fr, auto;
+    grid-template-areas: 
+    ". content-header ."
+    ". content-boxes ."
+    ". content-footer .";
+    height: 90vh;
     }
 
 }
