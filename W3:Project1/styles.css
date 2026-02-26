@@ -10,9 +10,10 @@ body{
     justify-content: center;
     align-items: center;
     font-family: "Sofia Sans Semi Condensed", sans-serif;
-    background-image: url(CookieSeamless.png);
+    background-image: url(EndlessDots.png);
     background-repeat: repeat;
-    background-size: 120px;
+    background-color: #fffff4;
+    background-size: 240px;
 }
 
 ul, ol{
@@ -25,7 +26,6 @@ ul, ol{
     display: flex;
     flex-direction: column;
     justify-content: center;
-    line-height: 1.5rem;
 
 }
 
@@ -34,7 +34,7 @@ ul, ol{
     display: grid;
     gap: 8px;
     grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: 120px 320px 320px 80px;
+    grid-template-rows: 160px 320px 320px 80px;
     grid-template-areas: 
     "a a a a"
     "b c c c"
@@ -57,13 +57,13 @@ h1, h2{
     font-weight: bold;
     grid-area: a;
     padding: 0 0 0 0;
+    line-height: 2rem;
 }
 
 .recipe-image{
     height: 100%;
-    
-    border: solid 2px #be6405;
-    border-radius: 8px;
+    /*border: solid 1px #be6405;
+    border-radius: 8px;*/
 }
 
 .recipe-meta{
@@ -74,12 +74,10 @@ h1, h2{
 }
 
 .recipe-description{
+    font-size: 24px;
     grid-area: c;
     background-color: #cb958e ;
-    font-weight: 600;
     color: #531d16 ;
-    font-style: italic;
-
 }
 
 .ingredients-section{
@@ -103,3 +101,31 @@ h1, h2{
 
 }
 
+@media (max-width: 1280px) {
+    .recipe-container{
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: 240px 240px 240px 480px 480px 180px;
+    grid-template-areas: 
+    "a a"
+    "b b"
+    "c c"
+    "d d"
+    "e e"
+    "f f";
+}
+    .recipe-header{
+        flex-direction: column-reverse;
+        text-align: center;
+    }
+
+    .recipe-image{
+        height: 80%;
+    }
+
+    .bento{
+    align-items: center;
+    }
+    footer{
+        text-align: center;
+    }
+}
