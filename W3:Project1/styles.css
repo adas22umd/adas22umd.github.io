@@ -1,0 +1,105 @@
+*{
+    padding: 0;
+    margin: 0;
+
+}
+
+body{
+    padding: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: "Sofia Sans Semi Condensed", sans-serif;
+    background-image: url(CookieSeamless.png);
+    background-repeat: repeat;
+    background-size: 120px;
+}
+
+ul, ol{
+    list-style-position: inside;
+}
+
+.bento{
+    padding: 0 24px 0 24px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    line-height: 1.5rem;
+
+}
+
+
+.recipe-container{
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: 120px 320px 320px 80px;
+    grid-template-areas: 
+    "a a a a"
+    "b c c c"
+    "d d e e"
+    "f f f f";
+}
+
+h1, h2{
+    font-family: "Signika", sans-serif;
+    font-weight: 600;
+    padding-bottom: 1rem;
+}
+
+.recipe-header{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 20px;
+    font-weight: bold;
+    grid-area: a;
+    padding: 0 0 0 0;
+}
+
+.recipe-image{
+    height: 100%;
+    
+    border: solid 2px #be6405;
+    border-radius: 8px;
+}
+
+.recipe-meta{
+    grid-area: b;
+    background-color: #99edcc;
+    color: #1d5e44;
+
+}
+
+.recipe-description{
+    grid-area: c;
+    background-color: #cb958e ;
+    font-weight: 600;
+    color: #531d16 ;
+    font-style: italic;
+
+}
+
+.ingredients-section{
+    grid-area: d;
+    background-color: #e36689;
+    color: #741f39 ;
+
+}
+
+.instructions-section{
+    grid-area: e;
+    background-color: #9a275a;
+    color: #ffffff;
+}
+
+.recipe-footer{
+    grid-area: f;
+    background-color: #9AC4F8;
+    color: #265083;
+    font-style: italic;
+
+}
+
