@@ -1,0 +1,234 @@
+/* BASE STYLES - Students can modify and extend */
+:root {
+    --primary-color: #0a435f;
+    --secondary-color: #3cc1ff;
+    --background-color: #368db8;
+    --card-background: #ffffff;
+    --text-color: #333;
+    --border-color: #ddd;
+    --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+header{
+    text-align: center;
+    font-weight: bold;
+    color: white;
+}
+
+body {
+    font-family: "Pixelify Sans", sans-serif;
+    margin: 0;
+    padding: 1rem;
+    background: var(--background-color);
+    color: var(--text-color);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.view-selector {
+    display: flex;
+    gap: 1rem;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.view-button {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border: #333 solid 2px;
+    cursor: pointer;
+    font-family: "Pixelify Sans";
+    font-size: 1rem;
+}
+
+.view-button:hover {
+    background: #005a87;
+}
+
+.view-button.active {
+    background: var(--secondary-color);
+}
+
+.display-container {
+    background: var(--card-background);
+    border: #333 solid 2px;
+    padding: 2rem;
+    min-height: 400px;
+}
+
+.loading {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    padding: 2rem;
+}
+
+.error {
+    background: #fee;
+    border: 1px solid #fcc;
+    color: #c00;
+    padding: 1.5rem;
+    border-radius: 4px;
+    text-align: center;
+}
+
+/* UTILITY CLASSES FOR STUDENTS */
+.view-title {
+    margin: 0 0 1rem 0;
+    color: var(--text-color);
+    border-bottom: 2px solid #eee;
+    padding-bottom: 0.5rem;
+}
+
+.view-description {
+    color: #666;
+    margin-bottom: 2rem;
+    font-style: italic;
+}
+
+/* CARD GRID LAYOUT */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.restaurant-card {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    background: var(--card-background);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.restaurant-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* TABLE LAYOUT */
+.restaurant-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.restaurant-table th,
+.restaurant-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 2px solid var(--border-color);
+    text-transform: uppercase;
+}
+
+.restaurant-table th {
+    background: #e5f1fc;
+    border-bottom: none;
+    font-weight: 600;
+}
+
+.restaurant-table tr:hover {
+    background: #f8f9fa;
+}
+
+/* CATEGORY GROUPS */
+.category-section {
+    margin-bottom: 2rem;
+}
+
+.category-header {
+    background: var(--primary-color);
+    color: white;
+    padding: 1rem;
+    margin: 0;
+}
+
+.category-sub-header {
+    background: #e5f1fc;
+    border: #333 2px solid;
+    border-bottom: none;
+    color: #333;
+    padding: 0.75rem;
+    margin: 0;
+}
+
+.category-items {
+    border: 2px solid #333;
+    border-top: none;
+}
+
+.category-item {
+    padding: 0.75rem;
+    border-bottom: 2px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.category-item:last-child {
+    border-bottom: none;
+}
+
+/* STATS LAYOUT */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.stat-card {
+    text-align: center;
+    padding: 2rem;
+    background:#376998;
+    color:#fff;
+    border: #333 solid 2px;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 0.5rem 0;
+}
+
+.stat-label {
+    font-size: 1.0rem;
+    opacity: 0.7;
+}
+
+.todo-implementation {
+    background: #fff3cd;
+    border: 2px dashed #ffc107;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    color: #856404;
+}
+
+.asst-box {
+    margin-top: 2rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+}
+
+.leaflet-popup-content-wrapper {
+  background: #0a435f;
+  color: white;
+  border-radius: 0;
+  border: 2px solid #333;
+  font-family: "Pixelify Sans", sans-serif;
+}
+
+.leaflet-popup-tip {
+  background: #0a435f;
+}
+
+.leaflet-popup-close-button {
+  color: white !important;
+}
