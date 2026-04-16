@@ -1,49 +1,38 @@
-const cache = {};
+const pokemonCount = 151;
+var pokedex = {}
 
-async function apiFetch(url) {
-  if (cache[url]) return cache[url];
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
-  const data = await res.json();
-  cache[url] = data;
+window.onload = async function() {
 
-  console.log(`✅ Fetched: ${url}`, data);
-  return data;
+    for (let i = 1; i <= pokemonCount; i++){
+        await getPokemon(i)
+    }
+    const pokemon = document.getElementById('change');
+    pokemon.id = 1;
+    pokemon.addEventListener("click", updatePokemon);
+    console.log(pokedex);
 }
 
-async function loadPokemon(idOrName) {
-  const key = String(idOrName).toLowerCase().trim();
 
-  const poke = await apiFetch(`https://pokeapi.co/api/v2/pokemon/${key}`);
-  console.log(`🎮 Pokemon data:`, poke);
 
-  const species = await apiFetch(`https://pokeapi.co/api/v2/pokemon-species/${poke.id}`);
-  console.log(`📖 Species data:`, species);
+async function getPokemon(num) {
+    let url = "https://pokeapi.co/api/v2/pokemon/" + num.toString();
 
-  const entry = species.flavor_text_entries.find(e => e.language.name === 'en');
-  const flavorText = entry
-    ? entry.flavor_text.replace(/[\f\n\r]/g, ' ') 
-    : 'No Pokédex entry found.';
+    let res = await fetch(url);
+    let pokemon = await res.json();
 
-    async function loadLocations() {
-    const locs = await apiFetch(`https://pokeapi.co/api/v2/pokemon/${poke.id}/encounters`);
-    console.log(`📍 Locations:`, locs);
-    return locs;
-  }
+    let pokemonName = pokemon["name"];
+    let pokemonType = pokemon["types"];
+    let pokemonImg = pokemon["sprites"]["front_default"];
+    
+    res = await fetch(pokemon["species"]["url"]);
+    let pokemonDesc = await res.json();
 
-  return { poke, flavorText, loadLocations };
+    pokemonDesc = pokemonDesc["flavor_text_entries"][9]["flavor_text"]
+
+    pokedex[num] = {"name" : pokemonName, "img" : pokemonImg, "types" : pokemonType, "desc" : pokemonDesc}
 }
 
-loadPokemon(1)
-
-async function init() {
-  try {
-    console.log('🚀 Starting load...');
-    const result = await loadPokemon(1);
-    console.log('✅ Done!', result);
-  } catch (err) {
-    console.error('❌ Something went wrong:', err);
-  }
+function updatePokemon(){
+    pokemon.id = pokemon.id+1;
+    document.getElementById("sprite").src = pokedex[pokemon.id]["img"];
 }
-
-init();
