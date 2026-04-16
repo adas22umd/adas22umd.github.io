@@ -5,6 +5,7 @@ window.onload = async function() {
 
     for (let i = 1; i <= pokemonCount; i++){
         await getPokemon(i)
+        
     }
     const pokemon = document.getElementById('change');
     pokemon.id = 1;
@@ -19,6 +20,7 @@ async function getPokemon(num) {
 
     let res = await fetch(url);
     let pokemon = await res.json();
+    console.log(pokemon);
 
     let pokemonName = pokemon["name"];
     let pokemonType = pokemon["types"];
