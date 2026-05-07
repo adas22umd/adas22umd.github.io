@@ -940,3 +940,6 @@ body {
     white-space: nowrap;
     pointer-events: none;
 }
+@media (max-width: 900px) {
+    .side-panel { display: none; }
+}
