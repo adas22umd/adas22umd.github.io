@@ -19,102 +19,105 @@
 
   <div class="page-wrapper">
 
-    <div class="side-panel side-panel--left">
+    <aside class="side-panel side-panel--left" aria-label="Professor Oak's Notes and Recently Viewed">
 
-      <div class="side-card" id="oak-panel">
+      <section class="side-card" id="oak-panel" aria-labelledby="oak-panel-title">
         <div class="side-card-header">
-          <span class="side-card-dot"></span>
-          <span class="side-card-title">Oak's Notes</span>
+          <span class="side-card-dot" aria-hidden="true"></span>
+          <span class="side-card-title" id="oak-panel-title">Oak's Notes</span>
         </div>
         <div class="oak-portrait">
           <img src="ProfOak.png" alt="Professor Oak" class="oak-img">
         </div>
         <div class="side-card-body">
-          <p class="oak-text" id="oak-text">Loading Pokédex data…</p>
+          <p class="oak-text" id="oak-text" aria-live="polite">Loading Pokédex data…</p>
         </div>
-      </div>
+      </section>
 
-      <div class="side-card" id="recent-panel">
+      <section class="side-card" id="recent-panel" aria-labelledby="recent-panel-title">
         <div class="side-card-header">
-          <span class="side-card-dot"></span>
-          <span class="side-card-title">Recently Viewed</span>
+          <span class="side-card-dot" aria-hidden="true"></span>
+          <span class="side-card-title" id="recent-panel-title">Recently Viewed</span>
         </div>
         <div class="side-card-body">
-          <div class="recent-list" id="recent-list">
+          <div class="recent-list" id="recent-list" role="list">
             <span class="side-empty">None yet</span>
           </div>
         </div>
-      </div>
+      </section>
 
-    </div>
+    </aside>
 
-    <div class="screen-container">
-      <div class="screen">
-        <img class="pokemon-sprite" id="sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png" alt="Pokemon sprite">
+    <main class="screen-container" aria-label="Pokédex">
+      <div class="screen" aria-live="polite" aria-atomic="true">
+        <img class="pokemon-sprite" id="sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png" alt="Bulbasaur sprite">
         <div class="main-info" id="main-info">
           <div class="number" id="number">01</div>
           <div class="name" id="name">BULBASAUR</div>
-          <div class="typing-all" id="typing-container"></div>
+          <div class="typing-all" id="typing-container" aria-label="Type"></div>
           <div class="desc" id="desc"></div>
         </div>
       </div>
 
-      <div class="search-bar" id="search-bar">
-        <input class="search-input" type="text" id="search-input" placeholder="ENTER NAME OR #" maxlength="30">
-        <button class="search-btn" onclick="handleSearch()">GO</button>
+      <div class="search-bar" id="search-bar" role="search">
+        <label for="search-input" class="sr-only">Search Pokémon by name or number</label>
+        <input class="search-input" type="text" id="search-input" placeholder="ENTER NAME OR #" maxlength="30"
+          aria-autocomplete="list" aria-controls="dropdown-list">
+        <button class="search-btn" onclick="handleSearch()" aria-label="Search">GO</button>
         <div class="search-dropdown" id="search-dropdown" style="display:none;">
-          <div class="dropdown-list" id="dropdown-list"></div>
+          <div class="dropdown-list" id="dropdown-list" role="listbox" aria-label="Pokémon suggestions"></div>
         </div>
       </div>
 
-      <div class="tab-row">
-        <button class="tab-btn active" id="tab-stats" onclick="switchTab('stats')">STATS</button>
-        <button class="tab-btn" id="tab-moves" onclick="switchTab('moves')">MOVES</button>
-        <button class="tab-btn" id="tab-locations" onclick="switchTab('locations')">MAP</button>
+      <div class="tab-row" role="tablist" aria-label="Pokémon details">
+        <button class="tab-btn active" id="tab-stats" role="tab" aria-selected="true" aria-controls="tab-content" onclick="switchTab('stats')">STATS</button>
+        <button class="tab-btn" id="tab-moves" role="tab" aria-selected="false" aria-controls="tab-content" onclick="switchTab('moves')">MOVES</button>
+        <button class="tab-btn" id="tab-locations" role="tab" aria-selected="false" aria-controls="tab-content" onclick="switchTab('locations')">MAP</button>
       </div>
 
       <div class="filter-panel" id="filter-panel">
-        <div class="screw screw-tl"></div>
-        <div class="screw screw-tr"></div>
-        <div class="screw screw-bl"></div>
-        <div class="screw screw-br"></div>
+        <div class="screw screw-tl" aria-hidden="true"></div>
+        <div class="screw screw-tr" aria-hidden="true"></div>
+        <div class="screw screw-bl" aria-hidden="true"></div>
+        <div class="screw screw-br" aria-hidden="true"></div>
         <div class="filter-panel-inner" id="filter-panel-inner">
+          <label for="move-filter-input" class="sr-only">Filter moves</label>
           <input class="move-filter-input" id="move-filter-input" type="text" placeholder="FILTER MOVES...">
         </div>
       </div>
 
       <div class="tab-content-wrapper">
-        <div class="tab-content" id="tab-content">
+        <div class="tab-content" id="tab-content" role="tabpanel">
           <p class="empty">Loading...</p>
         </div>
       </div>
 
       <div class="all-btns">
-        <button class="left-btn" id="changeleft">◀</button>
-        <button class="right-btn" id="changeright">▶</button>
+        <button class="left-btn" id="changeleft" aria-label="Previous Pokémon">◀</button>
+        <button class="right-btn" id="changeright" aria-label="Next Pokémon">▶</button>
       </div>
-    </div>
+    </main>
 
-    <div class="side-panel side-panel--right">
+    <aside class="side-panel side-panel--right" aria-label="Evolution Chain">
 
-      <div class="side-card" id="evo-panel">
+      <section class="side-card" id="evo-panel" aria-labelledby="evo-panel-title">
         <div class="side-card-header">
-          <span class="side-card-dot"></span>
-          <span class="side-card-title">Evolution Chain</span>
+          <span class="side-card-dot" aria-hidden="true"></span>
+          <span class="side-card-title" id="evo-panel-title">Evolution Chain</span>
         </div>
         <div class="side-card-body">
-          <div class="evo-chain" id="evo-chain">
+          <div class="evo-chain" id="evo-chain" aria-live="polite">
             <span class="side-empty">Loading…</span>
           </div>
         </div>
-      </div>
+      </section>
 
-    </div>
+    </aside>
 
   </div>
 
-  <div class="credits">designed and developed by Abhinav Das&nbsp;&nbsp;;)</div>
-  <div class="kb-hint">← → pokemon &nbsp;·&nbsp; tab tabs &nbsp;·&nbsp; s search &nbsp;·&nbsp; f filter</div>
+  <div class="credits" aria-label="Credits">designed and developed by Abhinav Das&nbsp;&nbsp;;)</div>
+  <div class="kb-hint" aria-label="Keyboard shortcuts">← → pokemon &nbsp;·&nbsp; tab tabs &nbsp;·&nbsp; s search &nbsp;·&nbsp; f filter</div>
 
 </body>
 </html>
