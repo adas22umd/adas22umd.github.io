@@ -4,7 +4,7 @@ let currentId = 1;
 let activeTab = 'stats';
 let isAnimating = false;
 let dropdownOpen = false;
-const TAB_ORDER = ['stats', 'moves', 'locations'];
+const TAB_ORDER = ['stats', 'moves', 'locations', 'compare'];
 
 // ── Gen 1 roster ─────────────────────────────────────────────────────────────
 // Index 0 = dex #1. Display name + API slug (lowercase, hyphens).
@@ -91,16 +91,27 @@ function closeDropdown() {
   });
 }
 
-function filterDropdown(query) {
+// Shared by the main search dropdown and the compare picker.
+// Returns roster entries ({ n, s, id }) matching a name fragment or exact dex number.
+function rosterMatches(query) {
   const q = query.trim().toLowerCase();
-  const list = document.getElementById('dropdown-list');
+  const num = parseInt(q);
+  return ROSTER
+    .map((p, i) => ({ ...p, id: i + 1 }))
+    .filter(p => {
+      if (!q) return true;
+      if (!isNaN(num)) return p.id === num;
+      return p.n.toLowerCase().includes(q) || p.s.includes(q);
+    });
+}
 
-  const matches = ROSTER.filter(p => {
-    if (!q) return true;
-    const num = parseInt(q);
-    if (!isNaN(num)) return (ROSTER.indexOf(p) + 1) === num;
-    return p.n.toLowerCase().includes(q) || p.s.includes(q);
-  });
+function rosterName(id) {
+  return ROSTER[id - 1]?.n || `#${id}`;
+}
+
+function filterDropdown(query) {
+  const list = document.getElementById('dropdown-list');
+  const matches = rosterMatches(query);
 
   if (!matches.length) {
     list.innerHTML = '<div class="dd-empty">No results</div>';
@@ -108,7 +119,7 @@ function filterDropdown(query) {
   }
 
   list.innerHTML = matches.map(p => {
-    const id = ROSTER.indexOf(p) + 1;
+    const id = p.id;
     const num = String(id).padStart(3, '0');
     return `<div class="dd-item" data-id="${id}" onmousedown="selectFromDropdown(${id})">
       <img class="dd-icon" src="${iconUrl(id)}" alt="${p.n}" loading="lazy">
@@ -371,9 +382,12 @@ function switchTab(newTab) {
 function renderCurrentTab(data) {
   const tc = document.getElementById('tab-content');
   tc.classList.toggle('map-tab', activeTab === 'locations');
+  tc.classList.toggle('compare-tab', activeTab === 'compare');
+  document.querySelector('.tab-content-wrapper').classList.toggle('is-compare', activeTab === 'compare');
   if (activeTab === 'stats')     renderStats(data);
   if (activeTab === 'moves')     renderMoves(data);
   if (activeTab === 'locations') renderLocations(data);
+  if (activeTab === 'compare')   renderCompare(data);
 }
 
 // ── Renderers ─────────────────────────────────────────────────────────────────
@@ -661,7 +675,7 @@ function formatStatName(name) {
 }
 function formatMoveName(name)     { return name.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' '); }
 function formatLocationName(name) { return name.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' '); }
-// ══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════��═══
 // TYPE → BACKGROUND COLOR MAP
 // ══════════════════════════════════════════════════════════════════════════════
 const TYPE_BG = {
@@ -770,6 +784,11 @@ document.addEventListener('keydown', e => {
     return;
   }
 
+  if (active && active.id === 'compare-input') {
+    handleCompareInputKey(e);
+    return;
+  }
+
   // ── SEARCH MODE ────────────────────────────────────────────────────────────
   if (kbMode === 'search' || isSearchInput) {
     switch (e.key) {
@@ -850,6 +869,21 @@ document.addEventListener('keydown', e => {
         document.getElementById('move-filter-input').focus();
       }
       break;
+
+    // Jump to compare tab (focuses the picker when no opponent is chosen)
+    case 'c':
+    case 'C':
+      e.preventDefault();
+      openCompareTab();
+      break;
+
+    // Clear the comparison opponent
+    case 'Escape':
+      if (activeTab === 'compare' && compareId) {
+        e.preventDefault();
+        clearCompare();
+      }
+      break;
   }
 });
 
@@ -884,6 +918,8 @@ function renderRecent() {
         <span class="recent-num">#${num}</span>
         <span class="recent-name">${r.name.toUpperCase()}</span>
       </div>
+      <button type="button" class="recent-vs" onclick="event.stopPropagation(); setCompareTarget(${r.id})"
+        aria-label="Compare ${rosterName(r.id)} with the current Pokémon" title="Compare">VS</button>
     </div>`;
   }).join('');
 
@@ -981,6 +1017,249 @@ async function renderEvoChain(speciesUrl, activeId) {
     );
   } catch {
     chain.innerHTML = '<span class="side-empty">Unavailable</span>';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// COMPARE — side-by-side base stats. Pokémon A = main screen, B = compareId.
+// ══════════════════════════════════════════════════════════════════════════════
+let compareId = null;
+let compareRenderToken = 0;
+let cmpFocusIndex = -1;
+let pendingCompareFocus = false;
+const statsCache = {};
+
+// Lighter than fetchPokemon(): opponent only needs the /pokemon payload,
+// so species + encounter requests are skipped.
+async function fetchStats(id) {
+  if (cache[id]) return cache[id];
+  if (statsCache[id]) return statsCache[id];
+  const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+  if (!res.ok) throw new Error('Not found');
+  const p = await res.json();
+  const data = {
+    id: p.id,
+    name: p.name,
+    types: p.types.map(t => t.type.name),
+    stats: p.stats.map(s => ({ name: formatStatName(s.stat.name), value: s.base_stat })),
+  };
+  statsCache[id] = data;
+  return data;
+}
+
+function openCompareTab() {
+  pendingCompareFocus = true;
+  if (activeTab !== 'compare') {
+    switchTab('compare');
+  } else if (cache[currentId]) {
+    const input = document.getElementById('compare-input');
+    if (input) { input.focus(); pendingCompareFocus = false; }
+  }
+}
+
+function setCompareTarget(id) {
+  if (id === currentId) return;
+  compareId = id;
+  if (activeTab !== 'compare') { switchTab('compare'); return; }
+  const a = cache[currentId];
+  if (a) renderCompare(a);
+}
+
+function clearCompare() {
+  compareId = null;
+  pendingCompareFocus = true;
+  const a = cache[currentId];
+  if (a && activeTab === 'compare') renderCompare(a);
+}
+
+function swapCompare() {
+  if (!compareId) return;
+  const nextMain = compareId;
+  compareId = currentId;
+  loadAndDisplay(nextMain);
+}
+
+function renderCompare(a) {
+  if (!compareId || compareId === a.id) { renderComparePicker(a); return; }
+
+  const cached = cache[compareId] || statsCache[compareId];
+  if (cached) { compareRenderToken++; renderComparison(a, cached); return; }
+
+  const token = ++compareRenderToken;
+  const targetId = compareId;
+  setTabContent(`<p class="cmp-loading">LOADING ${rosterName(targetId).toUpperCase()}…</p>`);
+  fetchStats(targetId)
+    .then(b => {
+      const stillWanted = token === compareRenderToken && activeTab === 'compare'
+        && currentId === a.id && compareId === targetId;
+      if (stillWanted) renderComparison(a, b);
+    })
+    .catch(() => {
+      if (token !== compareRenderToken || activeTab !== 'compare') return;
+      compareId = null;
+      renderComparePicker(a, 'Could not load that Pokémon. Try another:');
+    });
+}
+
+function compareMonHtml(mon, side) {
+  const num = String(mon.id).padStart(3, '0');
+  const types = mon.types.map(t => `<span class="cmp-type t-${t}">${t.toUpperCase()}</span>`).join('');
+  return `<div class="cmp-mon cmp-mon--${side}">
+    <img class="cmp-icon" src="${iconUrl(mon.id)}" alt="">
+    <div class="cmp-mon-info">
+      <span class="cmp-num">#${num}</span>
+      <span class="cmp-name">${rosterName(mon.id).toUpperCase()}</span>
+      <span class="cmp-types">${types}</span>
+    </div>
+  </div>`;
+}
+
+function statBarColor(value) {
+  return value >= 100 ? '#5DBE62' : value >= 60 ? '#FAD000' : '#FA7179';
+}
+
+function renderComparison(a, b) {
+  const nameA = rosterName(a.id);
+  const nameB = rosterName(b.id);
+  const pct = v => Math.round((v / 255) * 100);
+
+  const rows = a.stats.map((s, i) => {
+    const av = s.value;
+    const bv = b.stats[i]?.value ?? 0;
+    const aWin = av > bv;
+    const bWin = bv > av;
+    const verdict = aWin ? `${nameA} higher` : bWin ? `${nameB} higher` : 'tie';
+    return `<div class="cmp-row" role="listitem" aria-label="${s.name}: ${nameA} ${av}, ${nameB} ${bv}, ${verdict}">
+      <span class="cmp-val cmp-val--a${aWin ? ' is-win' : ''}${bWin ? ' is-lose' : ''}" aria-hidden="true">${av}</span>
+      <div class="cmp-bar-bg cmp-bar-bg--a" aria-hidden="true">
+        <div class="cmp-bar cmp-bar--a${bWin ? ' is-lose' : ''}" style="width:${pct(av)}%;background:${statBarColor(av)};"></div>
+      </div>
+      <span class="cmp-stat" aria-hidden="true">${s.name}</span>
+      <div class="cmp-bar-bg cmp-bar-bg--b" aria-hidden="true">
+        <div class="cmp-bar cmp-bar--b${aWin ? ' is-lose' : ''}" style="width:${pct(bv)}%;background:${statBarColor(bv)};"></div>
+      </div>
+      <span class="cmp-val cmp-val--b${bWin ? ' is-win' : ''}${aWin ? ' is-lose' : ''}" aria-hidden="true">${bv}</span>
+    </div>`;
+  }).join('');
+
+  const totalA = a.stats.reduce((sum, s) => sum + s.value, 0);
+  const totalB = b.stats.reduce((sum, s) => sum + s.value, 0);
+  const totalVerdict = totalA === totalB
+    ? 'Base stat totals are tied.'
+    : `${totalA > totalB ? nameA : nameB} has the higher base stat total by ${Math.abs(totalA - totalB)}.`;
+
+  setTabContent(`
+    <div class="cmp">
+      <div class="cmp-head">
+        ${compareMonHtml(a, 'a')}
+        <span class="cmp-vs" aria-hidden="true">VS</span>
+        ${compareMonHtml(b, 'b')}
+      </div>
+      <div class="cmp-rows" role="list" aria-label="Base stats: ${nameA} versus ${nameB}">${rows}</div>
+      <div class="cmp-foot">
+        <button type="button" class="cmp-action" onclick="swapCompare()" aria-label="Swap: make ${nameB} the main Pokémon">⇄ SWAP</button>
+        <div class="cmp-total" aria-label="Total: ${nameA} ${totalA}, ${nameB} ${totalB}">
+          <span class="cmp-total-val${totalA > totalB ? ' is-win' : ''}" aria-hidden="true">${totalA}</span>
+          <span class="cmp-total-label" aria-hidden="true">TOTAL</span>
+          <span class="cmp-total-val${totalB > totalA ? ' is-win' : ''}" aria-hidden="true">${totalB}</span>
+        </div>
+        <button type="button" class="cmp-action" onclick="clearCompare()" aria-label="Choose a different Pokémon to compare">CHANGE</button>
+      </div>
+      <p class="sr-only" aria-live="polite">${totalVerdict}</p>
+    </div>
+  `);
+
+  gsap.fromTo('.cmp-bar--a',
+    { scaleX: 0, transformOrigin: 'right center' },
+    { scaleX: 1, duration: 0.45, ease: 'power2.out', stagger: 0.05 }
+  );
+  gsap.fromTo('.cmp-bar--b',
+    { scaleX: 0, transformOrigin: 'left center' },
+    { scaleX: 1, duration: 0.45, ease: 'power2.out', stagger: 0.05 }
+  );
+}
+
+function renderComparePicker(a, note) {
+  compareRenderToken++;
+  const recents = recentlyViewed.filter(r => r.id !== a.id);
+  const chips = recents.map(r => `
+    <button type="button" class="cmp-chip" onclick="setCompareTarget(${r.id})" aria-label="Compare with ${rosterName(r.id)}">
+      <img src="${iconUrl(r.id)}" alt="">
+      <span>${rosterName(r.id)}</span>
+    </button>`).join('');
+
+  const label = note || `Compare <strong>${rosterName(a.id)}</strong> with`;
+  setTabContent(`
+    <div class="cmp-picker">
+      <div class="cmp-picker-head">
+        <label for="compare-input" class="cmp-label">${label}</label>
+        <input id="compare-input" class="cmp-input" type="text" placeholder="NAME OR #" maxlength="30"
+          autocomplete="off" aria-autocomplete="list" aria-controls="compare-results">
+      </div>
+      ${recents.length ? `<div class="cmp-recent" role="group" aria-label="Recently viewed">
+        <span class="cmp-recent-title">RECENT</span>${chips}
+      </div>` : ''}
+      <div class="cmp-results" id="compare-results" role="listbox" aria-label="Pokémon to compare"></div>
+    </div>
+  `);
+
+  updateCompareResults('');
+  const input = document.getElementById('compare-input');
+  input.addEventListener('input', () => updateCompareResults(input.value));
+  if (pendingCompareFocus) {
+    pendingCompareFocus = false;
+    input.focus();
+    kbClearTabHighlight();
+  }
+}
+
+function updateCompareResults(query) {
+  const list = document.getElementById('compare-results');
+  if (!list) return;
+  cmpFocusIndex = -1;
+  const matches = rosterMatches(query).filter(p => p.id !== currentId);
+  if (!matches.length) {
+    list.innerHTML = '<div class="dd-empty">No results</div>';
+    return;
+  }
+  list.innerHTML = matches.map(p => `
+    <button type="button" class="cmp-item" role="option" data-id="${p.id}" onclick="setCompareTarget(${p.id})">
+      <img class="dd-icon" src="${iconUrl(p.id)}" alt="" loading="lazy">
+      <span class="dd-num">#${String(p.id).padStart(3, '0')}</span>
+      <span class="dd-name">${p.n}</span>
+    </button>`).join('');
+}
+
+function handleCompareInputKey(e) {
+  const items = [...document.querySelectorAll('#compare-results .cmp-item')];
+  const setFocus = idx => {
+    if (!items.length) return;
+    cmpFocusIndex = Math.max(0, Math.min(idx, items.length - 1));
+    items.forEach((el, i) => el.classList.toggle('is-focus', i === cmpFocusIndex));
+    items[cmpFocusIndex].scrollIntoView({ block: 'nearest' });
+  };
+
+  switch (e.key) {
+    case 'Escape':
+      e.preventDefault();
+      document.activeElement.blur();
+      enterBrowseMode();
+      break;
+    case 'ArrowDown':
+      e.preventDefault();
+      setFocus(cmpFocusIndex < 0 ? 0 : cmpFocusIndex + 1);
+      break;
+    case 'ArrowUp':
+      e.preventDefault();
+      if (cmpFocusIndex > 0) setFocus(cmpFocusIndex - 1);
+      break;
+    case 'Enter': {
+      if (e.nativeEvent?.isComposing || e.isComposing || e.keyCode === 229) return;
+      e.preventDefault();
+      const item = items[cmpFocusIndex >= 0 ? cmpFocusIndex : 0];
+      if (item) setCompareTarget(parseInt(item.dataset.id));
+      break;
+    }
   }
 }
 
