@@ -1024,6 +1024,7 @@ async function renderEvoChain(speciesUrl, activeId) {
 // COMPARE — side-by-side base stats. Pokémon A = main screen, B = compareId.
 // ══════════════════════════════════════════════════════════════════════════════
 let compareId = null;
+let replacingId = null;
 let compareRenderToken = 0;
 let cmpFocusIndex = -1;
 let pendingCompareFocus = false;
@@ -1060,16 +1061,26 @@ function openCompareTab() {
 function setCompareTarget(id) {
   if (id === currentId) return;
   compareId = id;
+  replacingId = null;
   if (activeTab !== 'compare') { switchTab('compare'); return; }
   const a = cache[currentId];
   if (a) renderCompare(a);
 }
 
+// Opens the picker but remembers the current opponent so Cancel can restore it.
 function clearCompare() {
+  replacingId = compareId;
   compareId = null;
   pendingCompareFocus = true;
   const a = cache[currentId];
   if (a && activeTab === 'compare') renderCompare(a);
+}
+
+function cancelCompareChange() {
+  const restoreId = replacingId;
+  replacingId = null;
+  if (restoreId && restoreId !== currentId) setCompareTarget(restoreId);
+  else { const a = cache[currentId]; if (a) renderComparePicker(a); }
 }
 
 function swapCompare() {
@@ -1097,31 +1108,45 @@ function renderCompare(a) {
     .catch(() => {
       if (token !== compareRenderToken || activeTab !== 'compare') return;
       compareId = null;
+      replacingId = null;
       renderComparePicker(a, 'Could not load that Pokémon. Try another:');
     });
 }
 
-function compareMonHtml(mon, side) {
+const CMP_SWAP_ICON = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5h11M10 2l3 3-3 3M14 11H3M6 8l-3 3 3 3"/></svg>`;
+const CMP_EDIT_ICON = `<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 2l3 3-8 8H3v-3z"/></svg>`;
+
+function compareMonInner(mon, extra = '') {
   const num = String(mon.id).padStart(3, '0');
   const types = mon.types.map(t => `<span class="cmp-type t-${t}">${t.toUpperCase()}</span>`).join('');
-  return `<div class="cmp-mon cmp-mon--${side}">
-    <img class="cmp-icon" src="${iconUrl(mon.id)}" alt="">
-    <div class="cmp-mon-info">
+  return `<img class="cmp-icon" src="${iconUrl(mon.id)}" alt="">
+    <span class="cmp-mon-info">
       <span class="cmp-num">#${num}</span>
       <span class="cmp-name">${rosterName(mon.id).toUpperCase()}</span>
       <span class="cmp-types">${types}</span>
-    </div>
-  </div>`;
+      ${extra}
+    </span>`;
 }
 
-function statBarColor(value) {
-  return value >= 100 ? '#5DBE62' : value >= 60 ? '#FAD000' : '#FA7179';
+const CMP_STAT_LABELS = { 'SP.ATK': 'SPA', 'SP.DEF': 'SPD', 'SPD': 'SPE' };
+const CMP_STAT_SPOKEN = { HP: 'HP', ATK: 'Attack', DEF: 'Defense', 'SP.ATK': 'Special Attack', 'SP.DEF': 'Special Defense', SPD: 'Speed' };
+const CMP_FALLBACK_COLOR = '#9db7d6';
+
+// Each side gets one fixed bar colour from its primary type. If both share a
+// primary type, side B falls back to its secondary type (or a neutral) so the
+// two sides never look identical.
+function compareSideColors(a, b) {
+  const typeA = a.types[0];
+  let colorB = `var(--${b.types[0]}-color)`;
+  if (b.types[0] === typeA) colorB = b.types[1] ? `var(--${b.types[1]}-color)` : CMP_FALLBACK_COLOR;
+  return { colorA: `var(--${typeA}-color)`, colorB };
 }
 
 function renderComparison(a, b) {
   const nameA = rosterName(a.id);
   const nameB = rosterName(b.id);
   const pct = v => Math.round((v / 255) * 100);
+  const { colorA, colorB } = compareSideColors(a, b);
 
   const rows = a.stats.map((s, i) => {
     const av = s.value;
@@ -1129,14 +1154,15 @@ function renderComparison(a, b) {
     const aWin = av > bv;
     const bWin = bv > av;
     const verdict = aWin ? `${nameA} higher` : bWin ? `${nameB} higher` : 'tie';
-    return `<div class="cmp-row" role="listitem" aria-label="${s.name}: ${nameA} ${av}, ${nameB} ${bv}, ${verdict}">
+    const spoken = CMP_STAT_SPOKEN[s.name] || s.name;
+    return `<div class="cmp-row" role="listitem" aria-label="${spoken}: ${nameA} ${av}, ${nameB} ${bv}, ${verdict}">
       <span class="cmp-val cmp-val--a${aWin ? ' is-win' : ''}${bWin ? ' is-lose' : ''}" aria-hidden="true">${av}</span>
       <div class="cmp-bar-bg cmp-bar-bg--a" aria-hidden="true">
-        <div class="cmp-bar cmp-bar--a${bWin ? ' is-lose' : ''}" style="width:${pct(av)}%;background:${statBarColor(av)};"></div>
+        <div class="cmp-bar cmp-bar--a" style="width:${pct(av)}%;background:${colorA};"></div>
       </div>
-      <span class="cmp-stat" aria-hidden="true">${s.name}</span>
+      <span class="cmp-stat" aria-hidden="true">${CMP_STAT_LABELS[s.name] || s.name}</span>
       <div class="cmp-bar-bg cmp-bar-bg--b" aria-hidden="true">
-        <div class="cmp-bar cmp-bar--b${aWin ? ' is-lose' : ''}" style="width:${pct(bv)}%;background:${statBarColor(bv)};"></div>
+        <div class="cmp-bar cmp-bar--b" style="width:${pct(bv)}%;background:${colorB};"></div>
       </div>
       <span class="cmp-val cmp-val--b${bWin ? ' is-win' : ''}${aWin ? ' is-lose' : ''}" aria-hidden="true">${bv}</span>
     </div>`;
@@ -1144,26 +1170,34 @@ function renderComparison(a, b) {
 
   const totalA = a.stats.reduce((sum, s) => sum + s.value, 0);
   const totalB = b.stats.reduce((sum, s) => sum + s.value, 0);
+  const diff = Math.abs(totalA - totalB);
+  const diffTag = `<span class="cmp-diff">+${diff}</span>`;
   const totalVerdict = totalA === totalB
     ? 'Base stat totals are tied.'
-    : `${totalA > totalB ? nameA : nameB} has the higher base stat total by ${Math.abs(totalA - totalB)}.`;
+    : `${totalA > totalB ? nameA : nameB} has the higher base stat total by ${diff}.`;
 
   setTabContent(`
     <div class="cmp">
       <div class="cmp-head">
-        ${compareMonHtml(a, 'a')}
-        <span class="cmp-vs" aria-hidden="true">VS</span>
-        ${compareMonHtml(b, 'b')}
+        <div class="cmp-mon cmp-mon--a">${compareMonInner(a)}</div>
+        <button type="button" class="cmp-swap" onclick="swapCompare()"
+          aria-label="Swap sides: make ${nameB} the main Pokémon" title="Swap sides">
+          ${CMP_SWAP_ICON}
+        </button>
+        <button type="button" class="cmp-mon cmp-mon--b" onclick="clearCompare()"
+          aria-label="Change opponent: currently ${nameB}">
+          ${compareMonInner(b, `<span class="cmp-change" aria-hidden="true">${CMP_EDIT_ICON}CHANGE</span>`)}
+        </button>
       </div>
       <div class="cmp-rows" role="list" aria-label="Base stats: ${nameA} versus ${nameB}">${rows}</div>
-      <div class="cmp-foot">
-        <button type="button" class="cmp-action" onclick="swapCompare()" aria-label="Swap: make ${nameB} the main Pokémon">⇄ SWAP</button>
-        <div class="cmp-total" aria-label="Total: ${nameA} ${totalA}, ${nameB} ${totalB}">
-          <span class="cmp-total-val${totalA > totalB ? ' is-win' : ''}" aria-hidden="true">${totalA}</span>
-          <span class="cmp-total-label" aria-hidden="true">TOTAL</span>
-          <span class="cmp-total-val${totalB > totalA ? ' is-win' : ''}" aria-hidden="true">${totalB}</span>
-        </div>
-        <button type="button" class="cmp-action" onclick="clearCompare()" aria-label="Choose a different Pokémon to compare">CHANGE</button>
+      <div class="cmp-total" aria-label="Total: ${nameA} ${totalA}, ${nameB} ${totalB}">
+        <span class="cmp-total-side cmp-total-side--a" aria-hidden="true">
+          ${totalA > totalB ? diffTag : ''}<span class="cmp-total-val${totalA > totalB ? ' is-win' : totalB > totalA ? ' is-lose' : ''}">${totalA}</span>
+        </span>
+        <span class="cmp-total-label" aria-hidden="true">TOTAL</span>
+        <span class="cmp-total-side cmp-total-side--b" aria-hidden="true">
+          <span class="cmp-total-val${totalB > totalA ? ' is-win' : totalA > totalB ? ' is-lose' : ''}">${totalB}</span>${totalB > totalA ? diffTag : ''}
+        </span>
       </div>
       <p class="sr-only" aria-live="polite">${totalVerdict}</p>
     </div>
@@ -1188,13 +1222,18 @@ function renderComparePicker(a, note) {
       <span>${rosterName(r.id)}</span>
     </button>`).join('');
 
-  const label = note || `Compare <strong>${rosterName(a.id)}</strong> with`;
+  const replacing = replacingId && replacingId !== a.id ? replacingId : null;
+  const label = note || (replacing
+    ? `Replace <strong>${rosterName(replacing)}</strong> with`
+    : `Compare <strong>${rosterName(a.id)}</strong> with`);
   setTabContent(`
     <div class="cmp-picker">
       <div class="cmp-picker-head">
         <label for="compare-input" class="cmp-label">${label}</label>
         <input id="compare-input" class="cmp-input" type="text" placeholder="NAME OR #" maxlength="30"
           autocomplete="off" aria-autocomplete="list" aria-controls="compare-results">
+        ${replacing ? `<button type="button" class="cmp-cancel" onclick="cancelCompareChange()"
+          aria-label="Cancel and keep comparing with ${rosterName(replacing)}">CANCEL</button>` : ''}
       </div>
       ${recents.length ? `<div class="cmp-recent" role="group" aria-label="Recently viewed">
         <span class="cmp-recent-title">RECENT</span>${chips}

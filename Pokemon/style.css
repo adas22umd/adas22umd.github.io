@@ -971,14 +971,14 @@ body {
 .tab-content-wrapper {
     transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.tab-content-wrapper.is-compare { height: 200px; }
+.tab-content-wrapper.is-compare { height: 260px; }
 
 .tab-content.compare-tab {
     box-sizing: border-box;
-    height: 200px;
-    min-height: 200px;
-    max-height: 200px;
-    padding: 8px 10px;
+    height: 260px;
+    min-height: 260px;
+    max-height: 260px;
+    padding: 10px 14px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -988,34 +988,61 @@ body {
 .cmp-picker {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     height: 100%;
     min-height: 0;
 }
 
 .cmp-head {
     display: flex;
-    align-items: center;
-    gap: 6px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid #222;
+    align-items: stretch;
+    gap: 10px;
+    flex-shrink: 0;
 }
 
 .cmp-mon {
     flex: 1;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     min-width: 0;
+    padding: 4px 8px;
+    border: 2px solid transparent;
+    border-radius: 6px;
 }
 .cmp-mon--b {
+    position: relative;
     flex-direction: row-reverse;
     text-align: right;
+    background: #1a1a1a;
+    border-color: #FAD000;
+    font-family: "Pixelify Sans", sans-serif;
+    color: inherit;
+    cursor: pointer;
+    transition: background 0.12s, box-shadow 0.12s;
+}
+.cmp-mon--b:hover,
+.cmp-mon--b:focus-visible {
+    background: #2a2200;
+    box-shadow: 0 0 0 3px rgba(250,208,0,0.2);
+    outline: none;
+}
+.cmp-change {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    margin-top: 2px;
+    white-space: nowrap;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #FAD000;
 }
 
 .cmp-icon {
-    width: 40px;
-    height: 30px;
+    width: 64px;
+    height: 48px;
     image-rendering: pixelated;
     object-fit: contain;
     flex-shrink: 0;
@@ -1024,16 +1051,16 @@ body {
 .cmp-mon-info {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: 2px;
     min-width: 0;
 }
 .cmp-num {
-    font-size: 9px;
+    font-size: 10px;
     color: #777;
     letter-spacing: 1px;
 }
 .cmp-name {
-    font-size: 12px;
+    font-size: 15px;
     font-weight: 700;
     color: #eee;
     letter-spacing: 0.5px;
@@ -1043,122 +1070,152 @@ body {
 }
 .cmp-types {
     display: flex;
-    gap: 3px;
+    gap: 4px;
 }
 .cmp-mon--b .cmp-types { justify-content: flex-end; }
 .cmp-type {
-    font-size: 8px;
+    font-size: 9px;
     font-weight: 700;
     letter-spacing: 0.5px;
-    padding: 1px 5px;
+    padding: 1px 6px;
     border-radius: 6px;
     color: #fff;
 }
 
-.cmp-vs {
+.cmp-swap {
     flex-shrink: 0;
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    color: #FAD000;
-    padding: 0 4px;
+    align-self: center;
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    background: transparent;
+    color: #888;
+    border: 1px solid #333;
+    border-radius: 50%;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    transition: color 0.12s, border-color 0.12s;
+}
+.cmp-swap:hover,
+.cmp-swap:focus-visible {
+    color: #eee;
+    border-color: #777;
+    outline: none;
 }
 
 .cmp-rows {
+    flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    justify-content: space-evenly;
 }
 .cmp-row {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 10px;
 }
 .cmp-val {
     width: 34px;
     flex-shrink: 0;
-    font-size: 10px;
+    font-size: 14px;
     font-weight: 700;
-    color: #fff;
+    color: #eee;
 }
 .cmp-val--a { text-align: right; }
 .cmp-val--b { text-align: left; }
 .cmp-val.is-win { color: #FAD000; }
-.cmp-val.is-lose { color: #777; }
-.cmp-val--a.is-win::before { content: '\25B2  '; font-size: 7px; }
-.cmp-val--b.is-win::after  { content: '  \25B2'; font-size: 7px; }
+.cmp-val.is-lose { color: #666; font-weight: 400; }
 
 .cmp-stat {
-    width: 44px;
+    width: 36px;
     flex-shrink: 0;
     text-align: center;
-    font-size: 10px;
-    color: #bbb;
-    letter-spacing: 0.5px;
+    font-size: 12px;
+    color: #888;
+    letter-spacing: 1px;
 }
 
 .cmp-bar-bg {
     flex: 1;
     display: flex;
-    height: 8px;
-    background: #2a2a2a;
-    border: 1px solid #333;
-    border-radius: 4px;
+    height: 14px;
+    background: #1c1c1c;
+    border-radius: 7px;
     overflow: hidden;
 }
 .cmp-bar-bg--a { justify-content: flex-end; }
 .cmp-bar {
     height: 100%;
-    border-radius: 4px;
+    border-radius: 7px;
 }
-.cmp-bar.is-lose { opacity: 0.4; }
 
-.cmp-foot {
-    margin-top: auto;
+.cmp-total {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 10px;
     padding-top: 6px;
-    border-top: 1px solid #222;
 }
-.cmp-total {
+.cmp-total-side {
     flex: 1;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
+    align-items: baseline;
+    gap: 8px;
 }
+.cmp-total-side--a { justify-content: flex-end; }
+.cmp-total-side--b { justify-content: flex-start; }
 .cmp-total-label {
-    font-size: 10px;
-    color: #777;
+    width: 56px;
+    text-align: center;
+    font-size: 12px;
+    color: #888;
     letter-spacing: 2px;
 }
 .cmp-total-val {
-    font-size: 13px;
+    font-size: 18px;
     font-weight: 700;
-    color: #ddd;
+    color: #eee;
 }
 .cmp-total-val.is-win { color: #FAD000; }
+.cmp-total-val.is-lose { color: #666; }
+.cmp-diff {
+    font-size: 11px;
+    font-weight: 700;
+    color: #5DBE62;
+    letter-spacing: 0.5px;
+}
 
-.cmp-action {
+.cmp-cancel {
     flex-shrink: 0;
-    background: #1a1a1a;
-    color: #bbb;
-    border: 1px solid #333;
-    border-radius: 4px;
-    padding: 3px 8px;
+    background: none;
+    border: none;
+    color: #999;
     font-family: "Pixelify Sans", sans-serif;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 1px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
     cursor: pointer;
-    transition: color 0.1s, border-color 0.1s;
+    padding: 4px;
 }
-.cmp-action:hover,
-.cmp-action:focus-visible {
+.cmp-cancel:hover,
+.cmp-cancel:focus-visible {
     color: #FAD000;
-    border-color: #FAD000;
     outline: none;
+}
+
+@media (max-width: 600px) {
+    .cmp-icon { width: 44px; height: 33px; }
+    .cmp-name { font-size: 12px; }
+    .cmp-change { display: none; }
+    .cmp-val { width: 28px; font-size: 12px; }
+    .cmp-stat { width: 30px; font-size: 10px; }
+    .cmp-bar-bg { height: 10px; }
+    .cmp-total-val { font-size: 15px; }
 }
 
 .cmp-loading {
